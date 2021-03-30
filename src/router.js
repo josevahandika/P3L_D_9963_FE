@@ -19,12 +19,12 @@ const router = new VueRouter({
             meta:{title: 'Login'},
             component:importComponent('Login'),
         },
-        {
-            path:"/register",
-            name:"Register",
-            meta:{title: 'Register'},
-            component:importComponent('Register'),
-        },
+        // {
+        //     path:"/register",
+        //     name:"Register",
+        //     meta:{title: 'Register'},
+        //     component:importComponent('Register'),
+        // },
         {
             path:"/",
             name:"Dashboard",
@@ -50,27 +50,89 @@ const router = new VueRouter({
                 //     meta: {title: 'Dashboard'},
                 //     component: importComponent('Dashboard/DashboardLayout'),
                 // },
-                // Profile
+                // Karyawan
                 {
-                   path: "/profile",
-                   name: "profile",
-                   meta: {title: 'Profile'},
-                   component: importComponent('dashboard/sidebar/Profile'),
+                   path: "/karyawan",
+                   name: "Karyawan",
+                   meta: {title: 'Karyawan'},
+                   component: importComponent('Dashboard/Sidebar/Karyawan'),
                 },
-                // Pengumuman
+                // Meja
                 {
-                    path: "/pengumuman",
-                    name: "pengumuman",
-                    meta: {title: 'Pengumuman'},
-                    component: importComponent('dashboard/sidebar/Pengumuman'),
+                    path: "/meja",
+                    name: "Meja",
+                    meta: {title: 'Meja'},
+                    component: importComponent('Dashboard/Sidebar/Meja'),
                 },
-                // Pengumuman
+                // Bahan
                 {
-                    path: "/pesan",
-                    name: "pesan",
-                    meta: {title: 'Pesan'},
-                    component: importComponent('dashboard/sidebar/Pesan'),
+                    path: "/bahan",
+                    name: "Bahan",
+                    meta: {title: 'Bahan'},
+                    component: importComponent('Dashboard/Sidebar/Bahan'),
                 },
+                // Customer
+                {
+                    path: "/customer",
+                    name: "Customer",
+                    meta: {title: 'Customer'},
+                    component: importComponent('Dashboard/Sidebar/Customer'),
+                },// Bahan Harian
+                {
+                    path: "/bahanharian",
+                    name: "Bahan Harian",
+                    meta: {title: 'Bahan Harian'},
+                    component: importComponent('Dashboard/Sidebar/BahanHarian'),
+                },
+                // Detail Transaksi
+                {
+                    path: "/detailtransaksi",
+                    name: "Detail Transaksi",
+                    meta: {title: 'Detail Transaksi'},
+                    component: importComponent('Dashboard/Sidebar/DetailTransaksi'),
+                },  
+                // Kartu
+                {
+                    path: "/kartu",
+                    name: "Kartu",
+                    meta: {title: 'Kartu'},
+                    component: importComponent('Dashboard/Sidebar/Kartu'),
+                }, 
+                // Menu
+                {
+                    path: "/menu",
+                    name: "Menu",
+                    meta: {title: 'Menu'},
+                    component: importComponent('Dashboard/Sidebar/Menu'),
+                }, 
+                //Reservasi
+                {
+                    path: "/reservasi",
+                    name: "Reservasi",
+                    meta: {title: 'Reservasi'},
+                    component: importComponent('Dashboard/Sidebar/Reservasi'),
+                }, 
+                //Riwayat Masuk
+                {
+                    path: "/riwayatbahanmasuk",
+                    name: "Riwayat Bahan Masuk",
+                    meta: {title: 'Riwayat Bahan Masuk'},
+                    component: importComponent('Dashboard/Sidebar/RiwayatBahanMasuk'),
+                }, 
+                //Riwayat Keluar
+                {
+                    path: "/riwayatbahankeluar",
+                    name: "Riwayat Bahan Keluar",
+                    meta: {title: 'Riwayat Bahan Keluar'},
+                    component: importComponent('Dashboard/Sidebar/RiwayatBahanKeluar'),
+                },
+                 //Transaksi
+                 {
+                    path: "/transaksi",
+                    name: " Transaksi",
+                    meta: {title: ' Transaksi'},
+                    component: importComponent('Dashboard/Sidebar/Transaksi'),
+                },   
             ]
         },
         {

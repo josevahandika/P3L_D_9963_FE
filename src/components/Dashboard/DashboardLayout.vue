@@ -3,7 +3,7 @@
             <v-navigation-drawer v-model="drawer" class="fullheight pink lighten-4 black--text" width="256" app>
                 <v-list-item>
                     <v-list-item-content>
-                        <v-list-item-title class="title">Selamat Datang di AKB</v-list-item-title>
+                        <v-list-item-title class="title">🍗AKB Resto🥩</v-list-item-title>
                         <v-list-item-subtitle> {{ jabatan }} </v-list-item-subtitle>
                     </v-list-item-content>
                 </v-list-item>
@@ -18,6 +18,11 @@
                         tag="router-link"
                         :to="item.to"
                         >
+                        <v-list-item-icon>
+                            <v-icon>
+                            {{item.icon}}
+                            </v-icon>
+                        </v-list-item-icon>
                         <v-list-item-content>
                             <v-list-item-title>{{ item.title }}</v-list-item-title>
                         </v-list-item-content>
@@ -43,19 +48,45 @@
                     return {
                         jabatan: "",
                         drawer: true,
+                        itemsOM: [
+                            { title: "Karyawan", to: "/karyawan",icon: "mdi-account-heart"},
+                            { title: "Meja", to: "/meja", icon: "mdi-table-chair" },
+                            { title: "Bahan", to: "/bahan", icon: "mdi-peanut" },
+                            { title: "Customer", to: "/customer", icon: "mdi-account-group-outline" },
+                            { title: "Bahan Harian", to: "/bahanharian", icon: "mdi-silverware" },
+                            { title: "Detail Transaksi", to: "/detailtransaksi", icon: "mdi-file" },
+                            { title: "Kartu", to: "/kartu", icon: "mdi-credit-card-outline" },
+                            { title: "Menu", to: "/menu", icon: "mdi-food-fork-drink" },
+                            { title: "Reservasi", to: "/reservasi", icon: "mdi-calendar-clock-outline" },
+                            { title: "Riwayat Bahan Masuk", to: "/riwayatbahanmasuk", icon: "mdi-calendar-arrow-right" },
+                            { title: "Riwayat Bahan Keluar", to: "/riwayatbahankeluar", icon: "mdi-calendar-arrow-left" },
+                            { title: "Transaksi", to: "/transaksi", icon: "mdi-note" },
+                            { title: "Laporan", to: "/laporan", icon: "mdi-note-outline" },
+                            { title: "Pesanan", to: "/pesanan", icon: "mdi-order-bool-ascending" },
+                        ],
+                        itemsOwner: [
+                            { title: "Karyawan", to: "/karyawan",icon: "mdi-account-heart"},
+                            { title: "Laporan", to: "/laporan" },
+                        ],
+                        itemsChef: [
+                            { title: "Bahan", to: "/bahan", icon: "mdi-peanut" },
+                            { title: "Meja", to: "/meja", icon: "mdi-table-chair" },
+                            { title: "Riwayat Bahan Masuk", to: "/riwayatbahanmasuk", icon: "mdi-calendar-arrow-right" },
+                            { title: "Riwayat Bahan Keluar", to: "/riwayatbahankeluar", icon: "mdi-calendar-arrow-left" },
+                            { title: "Pesanan", to: "/pesanan" },
+                        ],
+                        itemsWaiter: [
+                            { title: "Reservasi", to: "/reservasi", icon: "mdi-calendar-clock-outline" },
+                            { title: "Transaksi", to: "/transaksi",icon: "mdi-note" },
+                        ],
+                        itemsCashier: [
+                            { title: "Reservasi", to: "/reservasi", icon: "mdi-calendar-clock-outline" },
+                            { title: "Transaksi", to: "/transaksi",icon: "mdi-note" },
+                            { title: "Customer", to: "/customer", icon: "mdi-account-group-outline" },
+
+                        ],
                         items: [
-                            { title: "Karyawan", to: "/karyawan" },
-                            { title: "Meja", to: "/meja" },
-                            { title: "Bahan", to: "/bahan" },
-                            { title: "Customer", to: "/customer" },
-                            { title: "Bahan Harian", to: "/bahanharian" },
-                            { title: "Detail Transaksi", to: "/detailtransaksi" },
-                            { title: "Kartu", to: "/kartu" },
-                            { title: "Menu", to: "/menu" },
-                            { title: "Reservasi", to: "/reservasi" },
-                            { title: "Riwayat Bahan Masuk", to: "/riwayatbahanmasuk" },
-                            { title: "Riwayat Bahan Keluar", to: "/riwayatbahankeluar" },
-                            { title: "Transaksi", to: "/transaksi" },
+
                         ],
                     };
                 },
@@ -72,6 +103,26 @@
                 },
                 mounted(){
                     this.jabatan=localStorage.getItem("jabatan");
+                    if(this.jabatan === "Operational Manager")
+                    {
+                        this.items = this.itemsOM;
+                    }
+                    else if(this.jabatan === "Owner")
+                    {
+                        this.items = this.itemsOwner;
+                    }
+                    else if(this.jabatan === "Cashier")
+                    {
+                        this.items = this.itemsCashier;
+                    }
+                    else if(this.jabatan === "Waiter")
+                    {
+                        this.items = this.itemsWaiter;
+                    }
+                    else
+                    {
+                        this.items = this.itemsChef;
+                    }
                 }
             };
         </script>

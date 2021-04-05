@@ -1,6 +1,6 @@
 <template>
     <v-main class="list">
-        <h3 class="text-h3 font-weight-medium mb-5"> Bahan </h3>
+        <h3 class="text-h3 font-weight-medium mb-5"> 🍖Bahan🍖 </h3>
         <v-card>
             <v-card-title>
                 <v-text-field
@@ -105,14 +105,14 @@
                 dialog: false,
                 dialogConfirm: false,
                 headers: [
-                    { text: "Nama bahan",
+                    { text: "Nama bahan", class: "pink lighten-4",
                         align: "start",
                         sortable: true,
                         value: "nama_bahan" 
                     },
-                    { text: "Unit", value: "unit" },
-                    { text: "Jumlah Bahan Sisa", value: "jumlah_bahan_sisa" },
-                    { text: "", value: "actions" },
+                    { text: "Unit", class:"pink lighten-4", value: "unit" },
+                    { text: "Jumlah Bahan Sisa", class:"pink lighten-4", value: "jumlah_bahan_sisa" },
+                    { text: "",class:"pink lighten-4", value: "actions" },
                 ],
                 product: new FormData,
                 products: [],
@@ -192,7 +192,6 @@
                     this.load = false;
                     this.close();
                     this.readData(); //mengambil data
-                    this.resetForm();
                     this.inputType = 'Tambah';
                 }).catch(error => {
                     this.error_message=error.response.data.message;
@@ -212,11 +211,10 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
-                    this.readData(); //mengambil data
-                    this.resetForm();
-                    this.inputType = 'Tambah';
                     this.dialogConfirm = false;
+                    this.readData(); //mengambil data
+                    this.close();
+                    this.inputType = 'Tambah';
                 }).catch(error => {
                     this.error_message=error.response.data.message;
                     this.color="red"

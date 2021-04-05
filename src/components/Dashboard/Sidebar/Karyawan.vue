@@ -1,6 +1,6 @@
 <template>
     <v-main class="list">
-        <h3 class="text-h3 font-weight-medium mb-5"> Karyawan </h3>
+        <h3 class="text-h3 font-weight-medium mb-5"> 👩‍🍳Karyawan👩‍🍳 </h3>
         <v-card>
             <v-card-title>
                 <v-text-field
@@ -18,7 +18,7 @@
                 <v-data-table :headers="headers" :items="products" :search="search" no-data-text="Loading" no-results-text="Data tidak ditemukan">
                     <template v-slot:[`item.actions`]="{ item }">
                         <v-btn small class="mr-2 pink lighten-4 black--text" @click="editHandler(item)">
-                        edit
+                            edit
                         </v-btn>
                         <v-btn small
                         v-if="item.status==='Aktif'"
@@ -40,36 +40,48 @@
                     </v-card-title>
                     <v-card-text>
                         <v-container>
+                        <v-form ref="form" lazy-validation v-model="valid">
                             <v-text-field
                                 v-model="form.name"
                                 label="Nama karyawan"
+                                :rules="fieldEmpty"
                                 required
                             ></v-text-field>
                             <v-select
                             v-model="form.jabatan"
                             :items="jabatan"
                             label="Jabatan"
+                            :rules="fieldEmpty"
+                            required
                             ></v-select>
                             <v-text-field
                                 v-if="inputType==='Tambah'"
                                 v-model="form.username"
                                 label="Username"
+                                :rules="fieldEmpty"
                                 required
                             ></v-text-field>
                             <v-text-field
                                 v-model="form.email"
                                 label="Email"
+                                :rules="fieldEmpty"
                                 required
                             ></v-text-field>
                             <v-text-field
                                 v-if="inputType==='Tambah'"
                                 v-model="form.password"
+                                :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'"
+                                :type="show1 ? 'text' : 'password'"
                                 label="Password"
+                                :rules="fieldEmpty"
                                 required
+                                @click:append="show1 = !show1"
                             ></v-text-field>
                             <v-text-field
+                                type="number"
                                 v-model="form.telepon"
                                 label="Telepon"
+                                :rules="fieldEmpty"
                                 required
                             ></v-text-field>
                             <v-menu
@@ -99,16 +111,19 @@
                                 @change="saveDate"
                                 ></v-date-picker>
                             </v-menu>
-                            <v-text-field
+                            <!-- <v-text-field
                                 v-model="form.status"
                                 label="Status"
+                                :rules="fieldEmpty"
                                 required
-                            ></v-text-field>
+                            ></v-text-field> -->
                             <v-select
                             v-model="form.jenis_kelamin"
                             :items="jenis_kelamin"
+                            :rules="fieldEmpty"
                             label="Jenis Kelamin"
                             ></v-select>
+                        </v-form>
                         </v-container>
                     </v-card-text>
                     <v-card-actions>
@@ -170,6 +185,8 @@
         name: "List",
         data() {
             return {
+                maxDate: new Date().toISOString().substr(0, 10),
+                show1: false,
                 inputType: 'Tambah',
                 jabatan: ['Owner', 'Operational Manager', 'Cashier', 'Chef', 'Waiter'],
                 jenis_kelamin: ['Pria', 'Wanita'],
@@ -182,33 +199,31 @@
                 dialogConfirm: false,
                 dialogRestore: false,
                 headers: [
-                    { text: "Nama karyawan",
+                    { text: "Nama karyawan", class:"pink lighten-4",
                         align: "start",
                         sortable: true,
                         value: "name" 
                     },
-                    { text: "Jabatan", value: "jabatan" },
-                    { text: "Username", value: "username" },
-                    { text: "Email", value: "email" },
-                    { text: "Telepon", value: "telepon" },
-                    { text: "Tanggal bergabung", value: "tanggal_bergabung" },
-                    { text: "Status", value: "status" },
-                    { text: "Jenis Kelamin", value: "jenis_kelamin" },
-                    { text: "", value: "actions" },
+                    { text: "Jabatan", class:"pink lighten-4", value: "jabatan" },
+                    { text: "Username", class:"pink lighten-4", value: "username" },
+                    { text: "Email", class:"pink lighten-4", value: "email" },
+                    { text: "Telepon", class:"pink lighten-4", value: "telepon" },
+                    { text: "Tanggal bergabung", class:"pink lighten-4", value: "tanggal_bergabung" },
+                    { text: "Status", class:"pink lighten-4", value: "status" },
+                    { text: "Jenis Kelamin",class:"pink lighten-4", value: "jenis_kelamin" },
+                    { text: "", class:"pink lighten-4",value: "actions" },
                 ],
                 product: new FormData,
                 products: [],
                 form: {
                     name: null,
                     jabatan: null,
-                    username: null,
                     email: null,
-                    password: null,
                     telepon: null,
                     tanggal_bergabung: null,
-                    status: null,
                     jenis_kelamin: null,
                 },
+                fieldEmpty: [(v) => !!v || "Field tidak boleh kosong"],
                 deleteId: '',
                 editId: ''
             };
@@ -238,7 +253,6 @@
                 this.product.append('password', this.form.password);
                 this.product.append('telepon', this.form.telepon);
                 this.product.append('tanggal_bergabung', this.form.tanggal_bergabung);
-                this.product.append('status', this.form.status);
                 this.product.append('jenis_kelamin', this.form.jenis_kelamin);
                         var url = this.$api + '/karyawan/'
                 this.load = true
@@ -251,9 +265,8 @@
                 this.color="green"
                 this.snackbar=true;
                 this.load = false;
-                this.close();
                 this.readData(); //mengambil data
-                this.resetForm();
+                this.close();
                 }).catch(error => {
                 this.error_message=error.response.data.message;
                 this.color="red"
@@ -265,12 +278,9 @@
                 let newData = {
                     name: this.form.name,
                     jabatan: this.form.jabatan,
-                    username: this.form.username,
                     email: this.form.email,
-                    password: this.form.password,
                     telepon: this.form.telepon,
                     tanggal_bergabung: this.form.tanggal_bergabung,
-                    status: this.form.status,
                     jenis_kelamin: this.form.jenis_kelamin
                 }
                 var url = this.$api + '/karyawan/' + this.editId;
@@ -284,9 +294,8 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
                     this.readData(); //mengambil data
-                    this.resetForm();
+                    this.close();
                     this.inputType = 'Tambah';
                 }).catch(error => {
                     this.error_message=error.response.data.message;
@@ -306,11 +315,10 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
-                    this.readData(); //mengambil data
-                    this.resetForm();
-                    this.inputType = 'Tambah';
                     this.dialogConfirm = false;
+                    this.readData(); //mengambil data
+                    this.$refs.form.reset();
+                    this.inputType = 'Tambah';
                 }).catch(error => {
                     this.error_message=error.response.data.message;
                     this.color="red"
@@ -330,11 +338,10 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
-                    this.readData(); //mengambil data
-                    this.resetForm();
-                    this.inputType = 'Tambah';
                     this.dialogRestore = false;
+                    this.readData(); //mengambil data
+                    this.$refs.form.reset();
+                    this.inputType = 'Tambah';
                 }).catch(error => {
                     this.error_message=error.response.data.message;
                     this.color="red"
@@ -347,12 +354,9 @@
                 this.editId = item.id;
                 this.form.name = item.name;
                 this.form.jabatan = item.jabatan;
-                this.form.username = item.username;
                 this.form.email = item.email;
-                this.form.password = item.password;
                 this.form.telepon = item.telepon;
                 this.form.tanggal_bergabung = item.tanggal_bergabung;
-                this.form.status = item.status;
                 this.form.jenis_kelamin = item.jenis_kelamin;
                 this.dialog = true;
             },
@@ -365,27 +369,31 @@
                 this.dialogRestore = true;
             },
             close() {
+                this.$refs.form.reset();
                 this.dialog = false
                 this.inputType = 'Tambah';
             },
             cancel() {
-                this.resetForm();
+                this.$refs.form.reset();
                 this.readData();
                 this.dialog = false;
                 this.inputType = 'Tambah';
             },
-            resetForm() {
-                this.form = {
-                     name: null,
-                    jabatan: null,
-                    username: null,
-                    email: null,
-                    password: null,
-                    telepon: null,
-                    tanggal_bergabung: null,
-                    status: null,
-                    jenis_kelamin: null,
-                };
+            // resetForm() {
+            //     this.form = {
+            //          name: null,
+            //         jabatan: null,
+            //         username: null,
+            //         email: null,
+            //         password: null,
+            //         telepon: null,
+            //         tanggal_bergabung: null,
+            //         status: null,
+            //         jenis_kelamin: null,
+            //     };
+            // },
+            saveDate(date) {
+                this.$refs.menu.save(date);
             },
         },
         computed: {
@@ -395,6 +403,11 @@
         },
         mounted() {
             this.readData();
+        },
+        watch: {
+            menu(val) {
+            val && setTimeout(() => (this.$refs.picker.activePicker = "YEAR"));
+            },
         },
     };
 </script>

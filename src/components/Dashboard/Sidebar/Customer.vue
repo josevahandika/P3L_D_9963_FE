@@ -1,6 +1,6 @@
 <template>
     <v-main class="list">
-        <h3 class="text-h3 font-weight-medium mb-5"> Customer </h3>
+        <h3 class="text-h3 font-weight-medium mb-5"> 🙍‍♂️Customer🙍‍♂️ </h3>
         <v-card>
             <v-card-title>
                 <v-text-field
@@ -105,14 +105,14 @@
                 dialog: false,
                 dialogConfirm: false,
                 headers: [
-                    { text: "Nama customer",
+                    { text: "Nama customer", class:"pink lighten-4",
                         align: "start",
                         sortable: true,
                         value: "nama_customer" 
                     },
-                    { text: "Email", value: "email" },
-                    { text: "Telepon", value: "telepon" },
-                    { text: "", value: "actions" },
+                    { text: "Email", class:"pink lighten-4", value: "email" },
+                    { text: "Telepon", class:"pink lighten-4", value: "telepon" },
+                    { text: "",class:"pink lighten-4", value: "actions" },
                 ],
                 product: new FormData,
                 products: [],
@@ -166,7 +166,6 @@
                 this.load = false;
                 this.close();
                 this.readData(); //mengambil data
-                this.resetForm();
                 }).catch(error => {
                 this.error_message=error.response.data.message;
                 this.color="red"
@@ -213,11 +212,10 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
-                    this.readData(); //mengambil data
-                    this.resetForm();
-                    this.inputType = 'Tambah';
                     this.dialogConfirm = false;
+                    this.readData(); //mengambil data
+                    this.close();
+                    this.inputType = 'Tambah';
                 }).catch(error => {
                     this.error_message=error.response.data.message;
                     this.color="red"
@@ -239,10 +237,11 @@
             },
             close() {
                 this.dialog = false
-                this.inputType = 'Tambah';
+                this.inputType = 'Tambah';                
+                this.$refs.form.reset();
             },
             cancel() {
-                this.resetForm();
+                this.$refs.form.reset();
                 this.readData();
                 this.dialog = false;
                 this.inputType = 'Tambah';

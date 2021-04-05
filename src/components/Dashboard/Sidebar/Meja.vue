@@ -2,12 +2,14 @@
     <v-main class="list">
         <v-card>
             <v-card-title>
-        <h3 class="text-h3 font-weight-medium mb-5"> Meja </h3>
+        <h3 class="text-h3 font-weight-medium mb-5"> 🪑Meja🪑 </h3>
         <v-spacer></v-spacer>
            <v-data-iterator
             :search="search"
             :items="products"
-            hide-default-footer>
+            disable-pagination
+            hide-default-footer
+            sort-by="nomor_meja">
             <template v-slot:header>
                 <v-row>
                     <v-col>
@@ -22,8 +24,14 @@
                         </v-text-field>
                     </v-col>
                     <v-col>
-                        <v-btn color="pink lighten-4 black--text" dark @click="dialog = true">
+                        <v-btn color="pink lighten-4 black--text" dark @click="dialog = true" v-if="yanglogin==='Operational Manager'">
                             Tambah
+                        </v-btn>
+                         <v-btn v-if="statusMeja==false" @click="tampilMejaKosong()">
+                            Meja Kosong
+                        </v-btn>
+                        <v-btn v-if="statusMeja==true" @click="tampilMejaKosong()">
+                            Tampil Semua Meja
                         </v-btn>
                     </v-col>
                 </v-row>
@@ -39,10 +47,10 @@
                             class="my-1 pa-5"
                             color="success"
                         >
-                            <v-list-item-title class="headline mb-5; white--text" > <b>
+                            <v-list-item-title class="headline mb-5; white--text"> <b>
                             {{ item.nomor_meja }}</b>
                             </v-list-item-title>  
-                            <v-card-actions  class="justify-center">
+                            <v-card-actions  class="justify-center" v-if="yanglogin==='Operational Manager'">
                                  <v-icon
                                     small
                                     @click="editHandler(item)"
@@ -51,7 +59,7 @@
                                 </v-icon>
                                 <v-icon
                                     small
-                                    @click="deleteHandler(item.id)"
+                                    @click="deleteHandler(item)"
                                 >
                                     mdi-delete
                                 </v-icon>
@@ -62,10 +70,10 @@
                             class="my-1 pa-5"
                             color="red"   
                         >
-                            <v-list-item-title class="headline mb-5; white--text" > <b>
+                            <v-list-item-title class="headline mb-5; white--text"> <b>
                             {{ item.nomor_meja }}</b>
                             </v-list-item-title>      
-                            <v-card-actions class="justify-center">
+                            <v-card-actions class="justify-center" v-if="yanglogin==='Operational Manager'">
                                  <v-icon
                                     small
                                     @click="editHandler(item)"
@@ -154,6 +162,7 @@
                 search: null,
                 dialog: false,
                 dialogConfirm: false,
+                statusMeja: false,
                 headers: [
                     { text: "Nomor meja",
                         align: "start",
@@ -161,9 +170,10 @@
                         value: "nomor_meja" 
                     },
                 ],
-                product: new FormData,
+                product: new FormData(),
                 tempProducts: [],
                 products: [],
+                tempKosong: [],
                 form: {
                     nomor_meja: null,
                 },
@@ -171,10 +181,12 @@
                 editId: '',
                 fieldEmpty: [(v) => !!v || "Field tidak boleh kosong"],
                 valid: true,
+                yanglogin: localStorage.getItem('jabatan'),
             };
         },
         methods: {
             setForm() {
+                console.log(this.inputType);
                 if (this.inputType === "Tambah") {
                     if (this.$refs.form.validate())
                      this.save();
@@ -183,7 +195,6 @@
                     this.update();
                     }
                 }
-                this.inputType = "Tambah";
             },
             readData() {
                 var url = this.$api + '/meja'
@@ -200,10 +211,25 @@
                 });
             })
             },
+            readDataKosong() {
+                    var url = this.$api + '/mejaKosong'
+                this.$http.get(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }}).then(response => {
+                    this.tempProducts = response.data.data;
+                this.products = this.tempProducts.map(meja => {
+                    let data = {};
+                    data["nomor_meja"] = meja.nomor_meja;
+                    data["status"] = meja.status;
+                    return data;
+                });
+            })
+            },
             save() {
                // console.log('nama customer adalah' + this.form.nama_customer);
                 this.product.append('nomor_meja', this.form.nomor_meja);
-                        var url = this.$api + '/meja/'
+                        var url = this.$api + '/meja'
                 this.load = true
                 this.$http.post(url, this.product, {
                 headers: {
@@ -214,9 +240,8 @@
                 this.color="green"
                 this.snackbar=true;
                 this.load = false;
-                this.close();
                 this.readData(); //mengambil data
-                this.resetForm();
+                this.close();
                 }).catch(error => {
                 this.error_message=error.response.data.message;
                 this.color="red"
@@ -239,11 +264,11 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
                     this.readData(); //mengambil data
-                    this.resetForm();
+                    this.close();
                     this.inputType = 'Tambah';
                 }).catch(error => {
+                    this.inputType = 'Ubah';
                     this.error_message=error.response.data.message;
                     this.color="red"
                     this.snackbar=true;
@@ -261,9 +286,8 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
                     this.readData(); //mengambil data
-                    this.resetForm();
+                    this.close();
                     this.inputType = 'Tambah';
                     this.dialogConfirm = false;
                 }).catch(error => {
@@ -288,9 +312,10 @@
             close() {
                 this.dialog = false
                 this.inputType = 'Tambah';
+                this.$refs.form.reset();
             },
             cancel() {
-                this.resetForm();
+                this.$refs.form.reset();
                 this.readData();
                 this.dialog = false;
                 this.inputType = 'Tambah';
@@ -300,6 +325,16 @@
                     nomor_meja: null,
                 };
             },
+            tampilMejaKosong(){
+                if (this.statusMeja === true) {
+                    this.readData();
+                    this.statusMeja = false;
+                }
+                else if (this.statusMeja === false) {
+                    this.readDataKosong();
+                    this.statusMeja = true;
+                }
+            }
         },
         computed: {
             formTitle() {
@@ -308,6 +343,16 @@
         },
         mounted() {
             this.readData();
+            
         },
     };
 </script>
+
+<style scoped>
+
+.theme--light{
+
+    color: #b67162;
+}
+
+</style>

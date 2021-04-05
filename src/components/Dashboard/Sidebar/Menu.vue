@@ -1,6 +1,6 @@
 <template>
     <v-main class="list">
-        <h3 class="text-h3 font-weight-medium mb-5"> Menu </h3>
+        <h3 class="text-h3 font-weight-medium mb-5"> 🥓Menu🥓 </h3>
         <v-card>
             <v-card-title>
                 <v-text-field
@@ -133,18 +133,18 @@
                 dialog: false,
                 dialogConfirm: false,
                 headers: [
-                    { text: "Nama menu",
+                    { text: "Nama menu",class:"pink lighten-4",
                         align: "start",
                         sortable: true,
                         value: "nama_menu" 
                     },
-                    { text: "Takaran Saji", value: "takaran_saji" },
-                    { text: "Harga", value: "harga" },
-                    { text: "Kategori", value: "kategori" },
-                    { text: "Unit", value: "unit" },
-                    { text: "Deskripsi", value: "deskripsi" },
-                    { text: "ID Bahan", value: "id_bahan" },
-                    { text: "", value: "actions" },
+                    { text: "Takaran Saji", class:"pink lighten-4", value: "takaran_saji" },
+                    { text: "Harga", class:"pink lighten-4", value: "harga" },
+                    { text: "Kategori", class:"pink lighten-4", value: "kategori" },
+                    { text: "Unit", class:"pink lighten-4", value: "unit" },
+                    { text: "Deskripsi", class:"pink lighten-4", value: "deskripsi" },
+                    { text: "ID Bahan", class:"pink lighten-4", value: "id_bahan" },
+                    { text: "", class:"pink lighten-4", value: "actions" },
                 ],
                 product: new FormData,
                 products: [],
@@ -265,11 +265,10 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.close();
-                    this.readData(); //mengambil data
-                    this.resetForm();
-                    this.inputType = 'Tambah';
                     this.dialogConfirm = false;
+                    this.readData(); //mengambil data
+                    this.close();
+                    this.inputType = 'Tambah';
                 }).catch(error => {
                     this.error_message=error.response.data.message;
                     this.color="red"

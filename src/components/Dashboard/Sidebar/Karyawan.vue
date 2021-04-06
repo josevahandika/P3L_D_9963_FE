@@ -64,7 +64,7 @@
                             <v-text-field
                                 v-model="form.email"
                                 label="Email"
-                                :rules="fieldEmpty"
+                                :rules="emailRules"
                                 required
                             ></v-text-field>
                             <v-text-field
@@ -78,10 +78,10 @@
                                 @click:append="show1 = !show1"
                             ></v-text-field>
                             <v-text-field
-                                type="number"
+                                class="inputNumber"
                                 v-model="form.telepon"
                                 label="Telepon"
-                                :rules="fieldEmpty"
+                                :rules="fieldNumber"
                                 required
                             ></v-text-field>
                             <v-menu
@@ -224,6 +224,16 @@
                     jenis_kelamin: null,
                 },
                 fieldEmpty: [(v) => !!v || "Field tidak boleh kosong"],
+                fieldNumber: [
+                    (v) => !!v || "Field tidak boleh kosong",
+                    (v) => (v && v[0] == 0 && v[1] == 8) || "Nomor HP harus diawali 08!",
+                    (v) => (v && v.length <= 13) || "Nomor HP harus kurang dari 13!",
+                    (v) => (v && v.length >= 6) || "Nomor HP harus lebih dari 6!",
+                ],
+                emailRules: [
+                    (v) => !!v || "Field tidak boleh kosong",
+                    v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+                ],
                 deleteId: '',
                 editId: ''
             };
@@ -411,3 +421,11 @@
         },
     };
 </script>
+<style>
+.inputNumber input::-webkit-outer-spin-button,
+.inputNumber input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  display: none;
+}
+</style>

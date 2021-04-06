@@ -14,6 +14,12 @@
                     <v-btn color="pink lighten-4 black--text" dark @click="dialog = true">
                         Tambah
                     </v-btn>
+                    <v-btn v-if="statusBahan==false" @click="tampilBahanHabis()">
+                        Bahan Habis
+                    </v-btn>
+                    <v-btn v-if="statusBahan==true" @click="tampilBahanHabis()">
+                        Tampil Semua Bahan
+                    </v-btn>
                 </v-card-title>
                 <v-data-table :headers="headers" :items="products" :search="search" no-data-text="Loading" no-results-text="Data tidak ditemukan">
                     <template v-slot:[`item.actions`]="{ item }">
@@ -30,7 +36,7 @@
             <v-dialog v-model="dialog" persistent max-width="600px">
                 <v-card>
                     <v-card-title>
-                    <span class="headline">{{ formTitle }} Meja </span>
+                    <span class="headline">{{ formTitle }} Bahan </span>
                     </v-card-title>
                     <v-card-text>
                         <v-container>
@@ -101,6 +107,7 @@
                 snackbar: false,
                 error_message: '',
                 color: '',
+                statusBahan: false,
                 search: null,
                 dialog: false,
                 dialogConfirm: false,
@@ -137,7 +144,7 @@
                     this.update();
                     }
                 }
-                this.inputType = "Tambah";
+                // this.inputType = "Tambah";
             },
             readData() {
                 var url = this.$api + '/bahan'
@@ -146,6 +153,22 @@
                 'Authorization': 'Bearer ' + localStorage.getItem('token')
                 }}).then(response => {
                 this.products = response.data.data
+            })
+            },
+            readDataKosong() {
+                    var url = this.$api + '/bahanKosong'
+                this.$http.get(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }}).then(response => {
+                    this.tempProducts = response.data.data;
+                this.products = this.tempProducts.map(bahan => {
+                    let data = {};
+                    data["nama_bahan"] = bahan.nama_bahan;
+                    data["unit"] = bahan.unit;
+                    data["jumlah_bahan_sisa"] = bahan.jumlah_bahan_sisa;
+                    return data;
+                });
             })
             },
             save() {
@@ -252,6 +275,16 @@
                     jumlah_bahan_sisa: null,
                 };
             },
+            tampilBahanHabis(){
+                if (this.statusBahan === true) {
+                    this.readData();
+                    this.statusBahan = false;
+                }
+                else if (this.statusBahan === false) {
+                    this.readDataKosong();
+                    this.statusBahan = true;
+                }
+            }
         },
         computed: {
             formTitle() {

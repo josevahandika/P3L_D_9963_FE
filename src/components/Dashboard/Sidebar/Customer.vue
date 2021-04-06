@@ -44,7 +44,7 @@
                             <v-text-field
                                 v-model="form.email"
                                 label="Email"
-                                :rules="fieldEmpty"
+                                :rules="emailRules"
                                 required
                             ></v-text-field>
                             <v-text-field
@@ -124,6 +124,10 @@
                 deleteId: '',
                 editId: '',
                 fieldEmpty: [(v) => !!v || "Field tidak boleh kosong"],
+                emailRules: [
+                   (v) => !!v || "Field tidak boleh kosong",
+                    v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+                ],
                 valid: true,
             };
         },

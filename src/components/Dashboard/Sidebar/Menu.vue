@@ -30,7 +30,7 @@
             <v-dialog v-model="dialog" persistent max-width="600px">
                 <v-card>
                     <v-card-title>
-                    <span class="headline">{{ formTitle }} Customer </span>
+                    <span class="headline">{{ formTitle }} Menu </span>
                     </v-card-title>
                     <v-card-text>
                         <v-container>
@@ -143,7 +143,7 @@
                     { text: "Kategori", class:"pink lighten-4", value: "kategori" },
                     { text: "Unit", class:"pink lighten-4", value: "unit" },
                     { text: "Deskripsi", class:"pink lighten-4", value: "deskripsi" },
-                    { text: "ID Bahan", class:"pink lighten-4", value: "id_bahan" },
+                    { text: "Nama Bahan", class:"pink lighten-4", value: "nama_bahan" },
                     { text: "", class:"pink lighten-4", value: "actions" },
                 ],
                 product: new FormData,
@@ -173,7 +173,7 @@
                     this.update();
                     }
                 }
-                this.inputType = "Tambah";
+//                this.inputType = "Tambah";
             },
             readData() {
                 var url = this.$api + '/menu'

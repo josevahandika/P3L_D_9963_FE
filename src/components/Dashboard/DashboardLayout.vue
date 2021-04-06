@@ -66,24 +66,25 @@
                         ],
                         itemsOwner: [
                             { title: "Karyawan", to: "/karyawan",icon: "mdi-account-heart"},
-                            { title: "Laporan", to: "/laporan" },
+                            { title: "Laporan", to: "/laporan", icon: "mdi-note-outline"},
                         ],
                         itemsChef: [
                             { title: "Bahan", to: "/bahan", icon: "mdi-peanut" },
-                            { title: "Meja", to: "/meja", icon: "mdi-table-chair" },
                             { title: "Riwayat Bahan Masuk", to: "/riwayatbahanmasuk", icon: "mdi-calendar-arrow-right" },
                             { title: "Riwayat Bahan Keluar", to: "/riwayatbahankeluar", icon: "mdi-calendar-arrow-left" },
-                            { title: "Pesanan", to: "/pesanan" },
+                            { title: "Pesanan", to: "/pesanan", icon: "mdi-order-bool-ascending"},
                         ],
                         itemsWaiter: [
+                            { title: "Customer", to: "/customer", icon: "mdi-account-group-outline" },
+                            { title: "Meja", to: "/meja", icon: "mdi-table-chair" },
                             { title: "Reservasi", to: "/reservasi", icon: "mdi-calendar-clock-outline" },
-                            { title: "Transaksi", to: "/transaksi",icon: "mdi-note" },
+                            { title: "Pesanan", to: "/pesanan", icon: "mdi-order-bool-ascending"},
                         ],
                         itemsCashier: [
                             { title: "Reservasi", to: "/reservasi", icon: "mdi-calendar-clock-outline" },
                             { title: "Transaksi", to: "/transaksi",icon: "mdi-note" },
                             { title: "Customer", to: "/customer", icon: "mdi-account-group-outline" },
-
+                            { title: "Meja", to: "/meja", icon: "mdi-table-chair" },
                         ],
                         items: [
 

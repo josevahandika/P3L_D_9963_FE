@@ -286,8 +286,8 @@
                     this.color="green"
                     this.snackbar=true;
                     this.load = false;
-                    this.readData(); //mengambil data
                     this.close();
+                    this.readData(); //mengambil data
                     this.inputType = 'Tambah';
                     this.dialogConfirm = false;
                 }).catch(error => {

@@ -27,7 +27,7 @@
                                 </div>
                             </v-card-text>
                         </v-card>
-                        <v-snackbar vmodel="snackbar" :color="color" timeout="2000" bottom>
+                        <v-snackbar v-model="snackbar" :color="color" timeout="2000" bottom>
                             {{error_message}}
                         </v-snackbar>
                     </v-flex>
@@ -78,9 +78,9 @@
                             localStorage.setItem('id', response.data.user.id); //menyimpan id user yang sedang login
                             localStorage.setItem('token', response.data.access_token);//menyimpan auth token
                             localStorage.setItem('jabatan', response.data.user.jabatan);
-                            this.error_message=response.data.message;
-                            this.color="green"
                             this.snackbar=true;
+                            this.color="green"
+                            this.error_message=response.data.message;
                             this.load = false;
                             this.clear();
                             this.$router.push({
@@ -88,9 +88,9 @@
                             })
                         }).catch(error => {
                             console.log(error.response.data);
-                            this.error_message=error.response.data.message;
-                            this.color="red"
                             this.snackbar=true;
+                            this.color="red"
+                            this.error_message=error.response.data.message;
                             localStorage.removeItem('token')
                             this.load = false
                         })

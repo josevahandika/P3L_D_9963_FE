@@ -14,6 +14,12 @@
                     <v-btn color="pink lighten-4 black--text" dark @click="dialog = true">
                         Tambah
                     </v-btn>
+                    <v-btn @click="dialogKuantitas = true">
+                        Tambah Kuantitas
+                    </v-btn>
+                    <v-btn color="pink lighten-4 black--text" @click="dialogBuang = true">
+                        Kurangi Kuantitas
+                    </v-btn>
                     <v-btn v-if="statusBahan==false" @click="tampilBahanHabis()">
                         Bahan Habis
                     </v-btn>
@@ -73,6 +79,140 @@
                     </v-card-actions>
                 </v-card>
             </v-dialog>
+             <v-dialog v-model="dialogKuantitas" persistent max-width="600px">
+                <v-card>
+                    <v-card-title>
+                    <span class="headline"> Tambah Stok </span>
+                    </v-card-title>
+                    <v-card-text>
+                        <v-container>
+                        <v-form ref="formKuantitas" lazy-validation v-model="valid">
+                            <v-select
+                                v-model="formKuantitas.id_bahan"
+                                label="Bahan"
+                                :items="products"
+                                item-text="nama_bahan"
+                                item-value="id"
+                                :rules="fieldEmpty"
+                                required
+                            ></v-select>
+                            <v-text-field
+                                v-model="formKuantitas.jumlah"
+                                label="Jumlah"
+                                :rules="fieldEmpty"
+                                required
+                            ></v-text-field>
+                            <v-text-field
+                                v-model="formKuantitas.harga"
+                                label="Harga"
+                                :rules="fieldEmpty"
+                                required
+                            ></v-text-field>
+                            <v-menu
+                                ref="menu"
+                                v-model="menu"
+                                :close-on-content-click="false"
+                                transition="scale-transition"
+                                offset-y
+                                min-width="290px"
+                            >
+                                <template v-slot:activator="{ on, attrs }">
+                                <v-text-field
+                                    v-model="formKuantitas.tanggal"
+                                    label="Tanggal"
+                                    :rules="fieldEmpty"
+                                    append-icon="mdi-calendar"
+                                    readonly
+                                    v-bind="attrs"
+                                    v-on="on"
+                                ></v-text-field>
+                                </template>
+                                <v-date-picker
+                                ref="picker"
+                                v-model="formKuantitas.tanggal"
+                                :max="maxDate"
+                                min="1950-01-01"
+                                @change="saveDate"
+                                ></v-date-picker>
+                            </v-menu>
+                        </v-form>
+                        </v-container>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="blue darken-1" text @click="cancelKuantitas">
+                            Cancel
+                        </v-btn>
+                        <v-btn color="blue darken-1" text @click="saveKuantitas">
+                            Save
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+            <v-dialog v-model="dialogBuang" persistent max-width="600px">
+                <v-card>
+                    <v-card-title>
+                    <span class="headline"> Buang Stok </span>
+                    </v-card-title>
+                    <v-card-text>
+                        <v-container>
+                        <v-form ref="formBuang" lazy-validation v-model="valid">
+                            <v-select
+                                v-model="formBuang.id_bahan"
+                                label="Bahan"
+                                :items="products"
+                                item-text="nama_bahan"
+                                item-value="id"
+                                :rules="fieldEmpty"
+                                required
+                            ></v-select>
+                            <v-text-field
+                                v-model="formBuang.jumlah"
+                                label="Jumlah"
+                                :rules="fieldEmpty"
+                                required
+                            ></v-text-field>
+                            <v-menu
+                                ref="menu"
+                                v-model="menu"
+                                :close-on-content-click="false"
+                                transition="scale-transition"
+                                offset-y
+                                min-width="290px"
+                            >
+                                <template v-slot:activator="{ on, attrs }">
+                                <v-text-field
+                                    v-model="formBuang.tanggal"
+                                    label="Tanggal"
+                                    :rules="fieldEmpty"
+                                    append-icon="mdi-calendar"
+                                    readonly
+                                    v-bind="attrs"
+                                    v-on="on"
+                                ></v-text-field>
+                                </template>
+                                <v-date-picker
+                                ref="picker"
+                                v-model="formBuang.tanggal"
+                                :max="maxDate"
+                                min="1950-01-01"
+                                @change="saveDate"
+                                ></v-date-picker>
+                            </v-menu>
+                        </v-form>
+                        </v-container>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="blue darken-1" text @click="cancelBuang">
+                            Cancel
+                        </v-btn>
+                        <v-btn color="blue darken-1" text @click="saveBuang">
+                            Save
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
             <v-dialog v-model="dialogConfirm" persistent max-width="400px">
                 <v-card>
                     <v-card-title>
@@ -102,6 +242,9 @@
         name: "List",
         data() {
             return {
+                menu: false,
+                maxDate: new Date().toISOString().substr(0, 10),
+                namaBahan: null,
                 inputType: 'Tambah',
                 load: false,
                 snackbar: false,
@@ -110,6 +253,8 @@
                 statusBahan: false,
                 search: null,
                 dialog: false,
+                dialogKuantitas: false,
+                dialogBuang: false,
                 dialogConfirm: false,
                 headers: [
                     { text: "Nama bahan", class: "pink lighten-4",
@@ -127,6 +272,17 @@
                     nama_bahan: null,
                     unit: null,
                     jumlah_bahan_sisa: null,
+                },
+                formKuantitas: {
+                    id_bahan: null,
+                    jumlah: null,
+                    harga: null,
+                    tanggal: null,
+                },
+                formBuang: {
+                    id_bahan: null,
+                    jumlah: null,
+                    tanggal: null,
                 },
                 deleteId: '',
                 editId: '',
@@ -152,7 +308,7 @@
                 headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem('token')
                 }}).then(response => {
-                this.products = response.data.data
+                this.products = response.data.data;
             })
             },
             readDataKosong() {
@@ -188,6 +344,60 @@
                 this.snackbar=true;
                 this.load = false;
                 this.close();
+                this.readData(); //mengambil data
+                }).catch(error => {
+                this.error_message=error.response.data.message;
+                this.color="red"
+                this.snackbar=true;
+                this.load = false;
+                })
+            },
+            saveKuantitas() {
+               // console.log('nama customer adalah' + this.form.nama_bahan);
+                this.product.append('id_bahan', this.formKuantitas.id_bahan);
+                this.product.append('jumlah', this.formKuantitas.jumlah);
+                this.product.append('harga', this.formKuantitas.harga);
+                this.product.append('tanggal', this.formKuantitas.tanggal);
+               //this.product.append('jumlah_bahan_sisa', this.form.jumlah_bahan_sisa);
+                        var url = this.$api + '/riwayatbahanmasuk/'
+                this.load = true
+                this.$http.post(url, this.product, {
+                headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+                }).then(response => {
+                this.error_message=response.data.message;
+                this.color="green"
+                this.snackbar=true;
+                this.load = false;
+                this.closeKuantitas();
+                this.readData(); //mengambil data
+                }).catch(error => {
+                this.error_message=error.response.data.message;
+                this.color="red"
+                this.snackbar=true;
+                this.load = false;
+                })
+            },
+            saveBuang() {
+               // console.log('nama customer adalah' + this.form.nama_bahan);
+                this.product.append('id_bahan', this.formBuang.id_bahan);
+                this.product.append('jumlah', this.formBuang.jumlah);
+                this.product.append('status', "Buang");
+                this.product.append('tanggal', this.formBuang.tanggal);
+               //this.product.append('jumlah_bahan_sisa', this.form.jumlah_bahan_sisa);
+                        var url = this.$api + '/riwayatbahankeluar/'
+                this.load = true
+                this.$http.post(url, this.product, {
+                headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+                }
+                }).then(response => {
+                this.error_message=response.data.message;
+                this.color="green"
+                this.snackbar=true;
+                this.load = false;
+                this.closeBuang();
                 this.readData(); //mengambil data
                 }).catch(error => {
                 this.error_message=error.response.data.message;
@@ -257,16 +467,42 @@
                 this.deleteId = id;
                 this.dialogConfirm = true;
             },
+            kuantitasHandler(item){
+                this.kuantitasId = item.id;
+                this.dialogKuantitas = true;
+            },
+            buangHandler(item){
+                this.buangId = item.id;
+                this.dialogBuang = true;
+            },
             close() {
                 this.dialog = false
                 this.inputType = 'Tambah';
                 this.$refs.form.reset();
+            },
+            closeKuantitas() {
+                this.dialogKuantitas = false
+                this.$refs.formKuantitas.reset();
+            },
+            closeBuang() {
+                this.dialogBuang = false
+                this.$refs.formBuang.reset();
             },
             cancel() {
                 this.readData();
                 this.dialog = false;
                 this.inputType = 'Tambah';
                 this.$refs.form.reset();
+            },
+            cancelKuantitas() {
+                this.readData();
+                this.dialogKuantitas = false;
+                this.$refs.formKuantitas.reset();
+            },
+            cancelBuang() {
+                this.readData();
+                this.dialogBuang = false;
+                this.$refs.formBuang.reset();
             },
             resetForm() {
                 this.form = {
@@ -284,7 +520,10 @@
                     this.readDataKosong();
                     this.statusBahan = true;
                 }
-            }
+            },
+            saveDate(date) {
+                this.$refs.menu.save(date);
+            },
         },
         computed: {
             formTitle() {

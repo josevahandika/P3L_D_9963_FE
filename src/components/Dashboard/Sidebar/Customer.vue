@@ -50,17 +50,10 @@
                 :rules="fieldEmpty"
                 required
               ></v-text-field>
-              <v-text-field
-                v-model="form.email"
-                label="Email"
-                :rules="emailRules"
-                required
-              ></v-text-field>
+              <v-text-field v-model="form.email" label="Email"></v-text-field>
               <v-text-field
                 v-model="form.telepon"
                 label="Telepon"
-                :rules="fieldEmpty"
-                required
               ></v-text-field>
             </v-form>
           </v-container>
@@ -135,10 +128,7 @@ export default {
       deleteId: "",
       editId: "",
       fieldEmpty: [(v) => !!v || "Field tidak boleh kosong"],
-      emailRules: [
-        (v) => !!v || "Field tidak boleh kosong",
-        (v) => /.+@.+\..+/.test(v) || "E-mail must be valid",
-      ],
+      emailRules: [(v) => /.+@.+\..+/.test(v) || "E-mail must be valid"],
       valid: true,
     };
   },
@@ -168,8 +158,16 @@ export default {
     save() {
       // console.log('nama customer adalah' + this.form.nama_customer);
       this.product.append("nama_customer", this.form.nama_customer);
-      this.product.append("email", this.form.email);
-      this.product.append("telepon", this.form.telepon);
+      if (this.form.email == "" || this.form.email == null) {
+        this.product.append("email", "-");
+      } else {
+        this.product.append("email", this.form.email);
+      }
+      if (this.form.telepon == "" || this.form.telepon == null) {
+        this.product.append("telepon", "-");
+      } else {
+        this.product.append("telepon", this.form.telepon);
+      }
       var url = this.$api + "/customer/";
       this.load = true;
       this.$http

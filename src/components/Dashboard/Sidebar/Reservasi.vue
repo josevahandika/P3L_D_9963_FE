@@ -134,8 +134,6 @@
                 v-else
                 v-model="form.telepon"
                 label="Telepon"
-                :rules="fieldEmpty"
-                required
               ></v-text-field>
               <v-text-field
                 v-if="customerYangSudahAda == true"
@@ -149,8 +147,6 @@
                 v-else
                 v-model="form.email"
                 label="Email"
-                :rules="fieldEmpty"
-                required
               ></v-text-field>
             </v-form>
           </v-container>
@@ -177,8 +173,8 @@
           <v-container>
             <v-form ref="formTidakLangsung" lazy-validation v-model="valid">
               <v-menu
-                ref="menu"
-                v-model="menu"
+                ref="menuTidakLangsung"
+                v-model="menuTidakLangsung"
                 :close-on-content-click="false"
                 transition="scale-transition"
                 offset-y
@@ -200,38 +196,82 @@
                   v-model="formTidakLangsung.tanggal_reservasi"
                   :min="maxDate"
                   max="2030-01-01"
-                  @change="saveDate"
+                  @change="saveDateTidakLangsung"
                 ></v-date-picker>
               </v-menu>
-              <v-text-field
+              <v-select
+                v-model="formTidakLangsung.sesi_reservasi"
+                :items="sesi_reservasi"
+                label="Sesi Reservasi"
+              ></v-select>
+              <v-select
                 v-model="formTidakLangsung.id_meja"
-                label="ID Meja"
+                label="Meja"
+                :items="mejas"
+                item-text="nomor_meja"
+                item-value="id"
                 :rules="fieldEmpty"
                 required
-              ></v-text-field>
+              ></v-select>
+              <v-switch v-model="customerTidakLangsung" flat></v-switch>
+              <v-data-table
+                v-if="tempCustomerTidakLangsung == true"
+                :headers="headersCustomer"
+                :items="customers"
+                :search="search"
+                no-data-text="Loading"
+                no-results-text="Data tidak ditemukan"
+              >
+                <template v-slot:[`item.actions`]="{ item }">
+                  <v-btn
+                    small
+                    class="mr-2 pink lighten-4 black--text"
+                    @click="pilihTidakLangsungHandler(item)"
+                  >
+                    Pilih
+                  </v-btn>
+                </template>
+              </v-data-table>
               <v-text-field
-                v-model="formTidakLangsung.id_karyawan"
-                label="ID Karyawan"
-                :rules="fieldEmpty"
-                required
-              ></v-text-field>
-              <v-text-field
+                v-if="customerTidakLangsung == true"
+                disabled
                 v-model="formTidakLangsung.nama_customer"
                 label="Nama Customer"
                 :rules="fieldEmpty"
                 required
               ></v-text-field>
               <v-text-field
+                v-else
+                v-model="formTidakLangsung.nama_customer"
+                label="Nama Customer"
+                :rules="fieldEmpty"
+                required
+              ></v-text-field>
+              <v-text-field
+                v-if="customerTidakLangsung == true"
+                disabled
                 v-model="formTidakLangsung.telepon"
                 label="Telepon"
                 :rules="fieldEmpty"
                 required
               ></v-text-field>
               <v-text-field
+                v-else
+                v-model="formTidakLangsung.telepon"
+                label="Telepon"
+              ></v-text-field>
+              <v-text-field
+                v-if="customerTidakLangsung == true"
+                disabled
                 v-model="formTidakLangsung.email"
                 label="Email"
                 :rules="fieldEmpty"
                 required
+              ></v-text-field>
+              <v-text-field
+                v-else
+                v-model="formTidakLangsung.email"
+                label="Email"
               ></v-text-field>
             </v-form>
           </v-container>
@@ -279,13 +319,18 @@ export default {
       maxDate: new Date().toISOString().substr(0, 10),
       sesi_reservasi: ["Lunch", "Dinner"],
       inputType: "Tambah",
+      tempIdCust: "",
+      tempIdCustTidakLangsung: "",
       load: false,
       snackbar: false,
       customerYangSudahAda: false,
+      customerTidakLangsung: false,
       tempCustomer: false,
+      tempCustomerTidakLangsung: false,
       error_message: "",
       color: "",
       menu: false,
+      menuTidakLangsung: false,
       search: null,
       dialog: false,
       dialogTidakLangsung: false,
@@ -425,66 +470,180 @@ export default {
         });
     },
     save() {
-      // console.log('nama customer adalah' + this.form.nama_customer);
-      this.product.append("tanggal_reservasi", this.form.tanggal_reservasi);
-      this.product.append("sesi_reservasi", "Langsung");
-      //this.product.append('status_reservasi', this.form.status_reservasi);
-      this.product.append("id_customer", this.form.id_customer);
-      this.product.append("id_meja", this.form.id_meja);
-      this.product.append("id_karyawan", localStorage.getItem("id"));
-      var url = this.$api + "/reservasi/";
-      this.load = true;
-      this.$http
-        .post(url, this.product, {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-        })
-        .then((response) => {
-          this.error_message = response.data.message;
-          this.color = "green";
-          this.snackbar = true;
-          this.load = false;
-          this.close();
-          this.readData(); //mengambil data
-        })
-        .catch((error) => {
-          this.error_message = error.response.data.message;
-          this.color = "red";
-          this.snackbar = true;
-          this.load = false;
-        });
+      if (this.customerYangSudahAda == true) {
+        this.product.append("id_customer", this.tempIdCust);
+        // console.log('nama customer adalah' + this.form.nama_customer);
+        this.product.append("tanggal_reservasi", this.form.tanggal_reservasi);
+        this.product.append("sesi_reservasi", "Langsung");
+        //this.product.append('status_reservasi', this.form.status_reservasi);
+        this.product.append("id_meja", this.form.id_meja);
+        this.product.append("id_karyawan", localStorage.getItem("id"));
+        var url = this.$api + "/reservasiold/";
+        this.load = true;
+        this.$http
+          .post(url, this.product, {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          })
+          .then((response) => {
+            this.error_message = response.data.message;
+            this.color = "green";
+            this.snackbar = true;
+            this.load = false;
+            this.close();
+            this.readData(); //mengambil data
+            this.customerYangSudahAda = false;
+            this.tempIdCust = "";
+          })
+          .catch((error) => {
+            this.error_message = error.response.data.message;
+            this.color = "red";
+            this.snackbar = true;
+            this.load = false;
+          });
+      } else {
+        // console.log('nama customer adalah' + this.form.nama_customer);
+        this.product.append("tanggal_reservasi", this.form.tanggal_reservasi);
+        this.product.append("sesi_reservasi", "Langsung");
+        //this.product.append('status_reservasi', this.form.status_reservasi);
+        this.product.append("nama_customer", this.form.nama_customer);
+        if (this.form.email == null || this.form.email == "") {
+          this.product.append("email", "-");
+        } else {
+          this.product.append("email", this.form.email);
+        }
+        if (this.form.telepon == null || this.form.telepon == "") {
+          this.product.append("telepon", "-");
+        } else {
+          this.product.append("telepon", this.form.telepon);
+        }
+        this.product.append("id_meja", this.form.id_meja);
+        this.product.append("id_karyawan", localStorage.getItem("id"));
+        var urlnew = this.$api + "/reservasinew/";
+        this.load = true;
+        this.$http
+          .post(urlnew, this.product, {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          })
+          .then((response) => {
+            this.error_message = response.data.message;
+            this.color = "green";
+            this.snackbar = true;
+            this.load = false;
+            this.close();
+            this.readData(); //mengambil data
+            this.customerYangSudahAda = false;
+            this.tempIdCust = "";
+          })
+          .catch((error) => {
+            this.error_message = error.response.data.message;
+            this.color = "red";
+            this.snackbar = true;
+            this.load = false;
+          });
+      }
     },
     saveTidakLangsung() {
       // console.log('nama customer adalah' + this.form.nama_customer);
-      this.product.append("tanggal_reservasi", this.form.tanggal_reservasi);
-      this.product.append("sesi_reservasi", this.form.sesi_reservasi);
-      this.product.append("status_reservasi", this.form.status_reservasi);
-      this.product.append("id_customer", this.form.id_customer);
-      this.product.append("id_meja", this.form.id_meja);
-      this.product.append("id_karyawan", this.form.id_karyawan);
-      var url = this.$api + "/reservasi/";
-      this.load = true;
-      this.$http
-        .post(url, this.product, {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-        })
-        .then((response) => {
-          this.error_message = response.data.message;
-          this.color = "green";
-          this.snackbar = true;
-          this.load = false;
-          this.closeTidakLangsung();
-          this.readData(); //mengambil data
-        })
-        .catch((error) => {
-          this.error_message = error.response.data.message;
-          this.color = "red";
-          this.snackbar = true;
-          this.load = false;
-        });
+      if (this.customerTidakLangsung == true) {
+        this.product.append("id_customer", this.tempIdCustTidakLangsung);
+        // console.log('nama customer adalah' + this.form.nama_customer);
+        this.product.append(
+          "tanggal_reservasi",
+          this.formTidakLangsung.tanggal_reservasi
+        );
+        this.product.append(
+          "sesi_reservasi",
+          this.formTidakLangsung.sesi_reservasi
+        );
+        //this.product.append('status_reservasi', this.formTidakLangsung.status_reservasi);
+        this.product.append("id_meja", this.formTidakLangsung.id_meja);
+        this.product.append("id_karyawan", localStorage.getItem("id"));
+        var url = this.$api + "/reservasiold/";
+        this.load = true;
+        this.$http
+          .post(url, this.product, {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          })
+          .then((response) => {
+            this.error_message = response.data.message;
+            this.color = "green";
+            this.snackbar = true;
+            this.load = false;
+            this.closeTidakLangsung();
+            this.readData(); //mengambil data
+            this.customerTidakLangsung = false;
+            this.tempIdCustTidakLangsung = "";
+          })
+          .catch((error) => {
+            this.error_message = error.response.data.message;
+            this.color = "red";
+            this.snackbar = true;
+            this.load = false;
+          });
+      } else {
+        // console.log('nama customer adalah' + this.formTidakLangsung.nama_customer);
+        this.product.append(
+          "tanggal_reservasi",
+          this.formTidakLangsung.tanggal_reservasi
+        );
+        this.product.append(
+          "sesi_reservasi",
+          this.formTidakLangsung.sesi_reservasi
+        );
+        //this.product.append('status_reservasi', this.formTidakLangsung.status_reservasi);
+        this.product.append(
+          "nama_customer",
+          this.formTidakLangsung.nama_customer
+        );
+        if (
+          this.formTidakLangsung.email == null ||
+          this.formTidakLangsung.email == ""
+        ) {
+          this.product.append("email", "-");
+        } else {
+          this.product.append("email", this.formTidakLangsung.email);
+        }
+        if (
+          this.formTidakLangsung.telepon == null ||
+          this.formTidakLangsung.telepon == ""
+        ) {
+          this.product.append("telepon", "-");
+        } else {
+          this.product.append("telepon", this.formTidakLangsung.telepon);
+        }
+        this.product.append("id_meja", this.formTidakLangsung.id_meja);
+        this.product.append("id_karyawan", localStorage.getItem("id"));
+        var urlnew = this.$api + "/reservasinew/";
+        this.load = true;
+        this.$http
+          .post(urlnew, this.product, {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          })
+          .then((response) => {
+            this.error_message = response.data.message;
+            this.color = "green";
+            this.snackbar = true;
+            this.load = false;
+            this.closeTidakLangsung();
+            this.readData(); //mengambil data
+            this.customerTidakLangsung = false;
+            this.tempIdCustTidakLangsung = "";
+          })
+          .catch((error) => {
+            this.error_message = error.response.data.message;
+            this.color = "red";
+            this.snackbar = true;
+            this.load = false;
+          });
+      }
     },
     update() {
       let newData = {
@@ -561,10 +720,18 @@ export default {
       this.dialogConfirm = true;
     },
     pilihHandler(item) {
+      this.tempIdCust = item.id;
       this.form.nama_customer = item.nama_customer;
       this.form.telepon = item.telepon;
       this.form.email = item.email;
       this.tempCustomer = false;
+    },
+    pilihTidakLangsungHandler(item) {
+      this.tempIdCustTidakLangsung = item.id;
+      this.formTidakLangsung.nama_customer = item.nama_customer;
+      this.formTidakLangsung.telepon = item.telepon;
+      this.formTidakLangsung.email = item.email;
+      this.tempCustomerTidakLangsung = false;
     },
     close() {
       this.dialog = false;
@@ -580,13 +747,13 @@ export default {
       this.$refs.form.reset();
       this.readData();
       this.dialog = false;
-      this.customerYangSudahAda = false;
+      //this.customerYangSudahAda = false;
     },
     cancelTidakLangsung() {
       this.$refs.formTidakLangsung.reset();
       this.readData();
       this.dialogTidakLangsung = false;
-      this.inputType = "Tambah";
+      //this.customerTidakLangsung = false;
     },
     btnReservasiLangsung() {
       this.dialog = true;
@@ -604,6 +771,9 @@ export default {
     // },
     saveDate(date) {
       this.$refs.menu.save(date);
+    },
+    saveDateTidakLangsung(date) {
+      this.$refs.menuTidakLangsung.save(date);
     },
   },
   computed: {
@@ -625,6 +795,16 @@ export default {
         this.tempCustomer = false;
       } else {
         this.tempCustomer = true;
+      }
+    },
+    customerTidakLangsung(val) {
+      if (val == false) {
+        this.formTidakLangsung.nama_customer = "";
+        this.formTidakLangsung.telepon = "";
+        this.formTidakLangsung.email = "";
+        this.tempCustomerTidakLangsung = false;
+      } else {
+        this.tempCustomerTidakLangsung = true;
       }
     },
   },

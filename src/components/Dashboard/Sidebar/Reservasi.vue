@@ -18,7 +18,7 @@
         >
           Tambah Reservasi Langsung
         </v-btn>
-        <v-btn @click="dialogTidakLangsung = true">
+        <v-btn @click="btnReservasiTidakLangsung">
           Tambah Reservasi Tidak Langsung
         </v-btn>
       </v-card-title>
@@ -32,12 +32,31 @@
         <template v-slot:[`item.actions`]="{ item }">
           <v-btn
             small
+            v-if="item.status_reservasi != 'Finished'"
+            class="mr-2"
+            @click="qrHandler(item)"
+          >
+            qr
+          </v-btn>
+          <v-btn
+            small
+            v-if="
+              item.sesi_reservasi != 'Langsung' &&
+                item.status_reservasi != 'Finished'
+            "
             class="mr-2 pink lighten-4 black--text"
             @click="editHandler(item)"
           >
             edit
           </v-btn>
-          <v-btn small @click="deleteHandler(item.id)">
+          <v-btn
+            small
+            v-if="
+              item.sesi_reservasi != 'Langsung' &&
+                item.status_reservasi != 'Finished'
+            "
+            @click="deleteHandler(item)"
+          >
             delete
           </v-btn>
         </template>
@@ -203,16 +222,30 @@
                 v-model="formTidakLangsung.sesi_reservasi"
                 :items="sesi_reservasi"
                 label="Sesi Reservasi"
-              ></v-select>
-              <v-select
-                v-model="formTidakLangsung.id_meja"
-                label="Meja"
-                :items="mejas"
-                item-text="nomor_meja"
-                item-value="id"
                 :rules="fieldEmpty"
                 required
               ></v-select>
+              <v-row>
+                <v-col>
+                  <v-select
+                    v-if="tempBtnMeja == true"
+                    v-model="formTidakLangsung.id_meja"
+                    label="Meja"
+                    :items="mejas"
+                    item-text="nomor_meja"
+                    item-value="id"
+                    :rules="fieldEmpty"
+                    required
+                  ></v-select>
+                  <v-btn
+                    small
+                    class="mr-2 pink lighten-4 black--text"
+                    @click="tampilMejaTertentu"
+                  >
+                    Tampil Meja
+                  </v-btn>
+                </v-col>
+              </v-row>
               <v-switch v-model="customerTidakLangsung" flat></v-switch>
               <v-data-table
                 v-if="tempCustomerTidakLangsung == true"
@@ -242,6 +275,7 @@
               ></v-text-field>
               <v-text-field
                 v-else
+                :disabled="inputType == 'Ubah' ? true : false"
                 v-model="formTidakLangsung.nama_customer"
                 label="Nama Customer"
                 :rules="fieldEmpty"
@@ -257,6 +291,7 @@
               ></v-text-field>
               <v-text-field
                 v-else
+                :disabled="inputType == 'Ubah' ? true : false"
                 v-model="formTidakLangsung.telepon"
                 label="Telepon"
               ></v-text-field>
@@ -270,6 +305,7 @@
               ></v-text-field>
               <v-text-field
                 v-else
+                :disabled="inputType == 'Ubah' ? true : false"
                 v-model="formTidakLangsung.email"
                 label="Email"
               ></v-text-field>
@@ -285,6 +321,15 @@
             Save
           </v-btn>
         </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="qrDialog" persistent max-width="400px">
+      <v-card>
+        <v-img width="100" src="https://gerardoleonel.com/AKBLOGO.png"></v-img>
+        <qriously :value="tempConcatQR" :size="200" />
+        <v-btn color="blue darken-1" text @click="cancelQR">
+          Cancel
+        </v-btn>
       </v-card>
     </v-dialog>
     <v-dialog v-model="dialogConfirm" persistent max-width="400px">
@@ -319,8 +364,11 @@ export default {
       maxDate: new Date().toISOString().substr(0, 10),
       sesi_reservasi: ["Lunch", "Dinner"],
       inputType: "Tambah",
+      tempIsiQR: {},
+      tempConcatQR: "",
       tempIdCust: "",
       tempIdCustTidakLangsung: "",
+      tempBtnMeja: false,
       load: false,
       snackbar: false,
       customerYangSudahAda: false,
@@ -335,6 +383,7 @@ export default {
       dialog: false,
       dialogTidakLangsung: false,
       dialogConfirm: false,
+      qrDialog: false,
       headers: [
         {
           text: "Tanggal Reservasi",
@@ -382,6 +431,7 @@ export default {
       products: [],
       mejas: [],
       customers: [],
+      tempQR: [],
       form: {
         tanggal_reservasi: null,
         sesi_reservasi: null,
@@ -451,11 +501,56 @@ export default {
         })
         .then((response) => {
           let data = response.data.data;
+          data.sort((a, b) =>
+            parseInt(a.nomor_meja) > parseInt(b.nomor_meja)
+              ? 1
+              : parseInt(b.nomor_meja) > parseInt(a.nomor_meja)
+              ? -1
+              : 0
+          );
           const temp = data.filter((i) => {
             return i.status == "Kosong";
           });
+          console.log("halah");
           this.mejas = temp;
+          console.log(temp);
         });
+    },
+    readDataMejaTertentu() {
+      this.mejas = [];
+      if (
+        this.formTidakLangsung.tanggal_reservasi != "" &&
+        this.formTidakLangsung.sesi_reservasi != "" &&
+        this.formTidakLangsung.tanggal_reservasi != null &&
+        this.formTidakLangsung.sesi_reservasi != null
+      ) {
+        let formMejaTertentu = {
+          tanggal_reservasi: this.formTidakLangsung.tanggal_reservasi,
+          sesi_reservasi: this.formTidakLangsung.sesi_reservasi,
+        };
+        var url = this.$api + "/mejareservasi";
+        this.$http
+          .post(url, formMejaTertentu, {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          })
+          .then((response) => {
+            let data = response.data.data;
+            data.sort((a, b) =>
+              parseInt(a.nomor_meja) > parseInt(b.nomor_meja)
+                ? 1
+                : parseInt(b.nomor_meja) > parseInt(a.nomor_meja)
+                ? -1
+                : 0
+            );
+            this.tempBtnMeja = true;
+            const temp = data.filter((i) => {
+              return i.status == "Kosong";
+            });
+            this.mejas = temp;
+          });
+      }
     },
     readDataCustomer() {
       var url = this.$api + "/customer";
@@ -579,6 +674,7 @@ export default {
             this.readData(); //mengambil data
             this.customerTidakLangsung = false;
             this.tempIdCustTidakLangsung = "";
+            this.tempBtnMeja = false;
           })
           .catch((error) => {
             this.error_message = error.response.data.message;
@@ -646,13 +742,27 @@ export default {
       }
     },
     update() {
+      if (
+        this.formTidakLangsung.email == null ||
+        this.formTidakLangsung.email == ""
+      ) {
+        this.product.append("email", "-");
+      }
+      if (
+        this.formTidakLangsung.telepon == null ||
+        this.formTidakLangsung.telepon == ""
+      ) {
+        this.product.append("telepon", "-");
+      }
       let newData = {
-        tanggal_reservasi: this.form.tanggal_reservasi,
-        sesi_reservasi: this.form.sesi_reservasi,
-        status_reservasi: this.form.status_reservasi,
-        id_customer: this.form.id_customer,
-        id_meja: this.form.id_meja,
-        id_karyawan: this.form.id_karyawan,
+        tanggal_reservasi: this.formTidakLangsung.tanggal_reservasi,
+        sesi_reservasi: this.formTidakLangsung.sesi_reservasi,
+        //status_reservasi: this.formTidakLangsung.status_reservasi,
+        nama_customer: this.formTidakLangsung.nama_customer,
+        telepon: this.formTidakLangsung.telepon,
+        email: this.formTidakLangsung.email,
+        id_meja: this.formTidakLangsung.id_meja,
+        id_karyawan: this.formTidakLangsung.id_karyawan,
       };
       var url = this.$api + "/reservasi/" + this.editId;
       this.load = true;
@@ -667,10 +777,11 @@ export default {
           this.color = "green";
           this.snackbar = true;
           this.load = false;
-          this.close();
+          this.closeTidakLangsung();
           this.readData(); //mengambil data
           this.resetForm();
-          this.inputType = "Tambah";
+          this.customerTidakLangsung = false;
+          this.tempIdCustTidakLangsung = "";
         })
         .catch((error) => {
           this.error_message = error.response.data.message;
@@ -694,7 +805,7 @@ export default {
           this.load = false;
           this.dialogConfirm = false;
           this.readData(); //mengambil data
-          this.close();
+          this.closeTidakLangsung();
           this.inputType = "Tambah";
         })
         .catch((error) => {
@@ -705,18 +816,21 @@ export default {
         });
     },
     editHandler(item) {
-      this.inputType = "Ubah";
-      this.editId = item.id;
-      this.form.tanggal_reservasi = item.tanggal_reservasi;
-      this.form.sesi_reservasi = item.sesi_reservasi;
-      this.form.status_reservasi = item.status_reservasi;
-      this.form.id_customer = item.id_customer;
-      this.form.id_meja = item.id_meja;
-      this.form.id_karyawan = item.id_karyawan;
-      this.dialog = true;
+      console.log(item);
+      if (item.sesi_reservasi != "Langsung") {
+        this.inputType = "Ubah";
+        this.editId = item.id;
+        this.formTidakLangsung.tanggal_reservasi = item.tanggal_reservasi;
+        this.formTidakLangsung.sesi_reservasi = item.sesi_reservasi;
+        this.formTidakLangsung.nama_customer = item.nama_customer;
+        this.formTidakLangsung.email = item.email;
+        this.formTidakLangsung.telepon = item.telepon;
+        this.formTidakLangsung.id_meja = item.id_meja;
+        this.dialogTidakLangsung = true;
+      }
     },
-    deleteHandler(id) {
-      this.deleteId = id;
+    deleteHandler(item) {
+      this.deleteId = item.id;
       this.dialogConfirm = true;
     },
     pilihHandler(item) {
@@ -733,6 +847,45 @@ export default {
       this.formTidakLangsung.email = item.email;
       this.tempCustomerTidakLangsung = false;
     },
+    qrHandler(item) {
+      let newData = {
+        id_reservasi: item.id,
+      };
+      var url = this.$api + "/transaksi";
+      this.load = true;
+      this.$http
+        .post(url, newData, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        })
+        .then((response) => {
+          this.tempQR = response.data.data;
+          this.tempIsiQR.id_transaksi = this.tempQR.id_transaksi;
+          this.tempIsiQR.nama_customer = this.tempQR.nama_customer;
+          this.tempIsiQR.nomor_meja = this.tempQR.nomor_meja;
+          this.tempIsiQR.tanggal = this.tempQR.tanggal;
+          this.tempIsiQR.waktu = this.tempQR.waktu;
+          this.tempConcatQR =
+            this.tempIsiQR.id_transaksi +
+            ";" +
+            this.tempIsiQR.nama_customer +
+            ";" +
+            this.tempIsiQR.nomor_meja +
+            ";" +
+            this.tempIsiQR.tanggal +
+            ";" +
+            this.tempIsiQR.waktu;
+          this.load = false;
+          this.qrDialog = true;
+        })
+        .catch((error) => {
+          this.error_message = error.response.data.message;
+          this.color = "red";
+          this.snackbar = true;
+          this.load = false;
+        });
+    },
     close() {
       this.dialog = false;
       this.inputType = "Tambah";
@@ -747,17 +900,28 @@ export default {
       this.$refs.form.reset();
       this.readData();
       this.dialog = false;
-      //this.customerYangSudahAda = false;
+      this.customerYangSudahAda = false;
     },
     cancelTidakLangsung() {
       this.$refs.formTidakLangsung.reset();
       this.readData();
       this.dialogTidakLangsung = false;
-      //this.customerTidakLangsung = false;
+      this.customerTidakLangsung = false;
+      this.tempBtnMeja = false;
+    },
+    cancelQR() {
+      this.qrDialog = false;
     },
     btnReservasiLangsung() {
       this.dialog = true;
       this.form.tanggal_reservasi = new Date().toISOString().substr(0, 10);
+    },
+    btnReservasiTidakLangsung() {
+      this.inputType = "Tambah";
+      this.dialogTidakLangsung = true;
+    },
+    tampilMejaTertentu() {
+      this.readDataMejaTertentu();
     },
     // resetForm() {
     //     this.form = {

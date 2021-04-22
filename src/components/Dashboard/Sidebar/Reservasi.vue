@@ -330,6 +330,9 @@
         <v-btn color="blue darken-1" text @click="cancelQR">
           Cancel
         </v-btn>
+        <v-btn color="blue darken-1" text @click="generateReport">
+          Print QR
+        </v-btn>
       </v-card>
     </v-dialog>
     <v-dialog v-model="dialogConfirm" persistent max-width="400px">
@@ -351,13 +354,44 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <template>
+      <div>
+        <vue-html2pdf
+          :show-layout="false"
+          :float-layout="true"
+          :enable-download="true"
+          :preview-modal="true"
+          :paginate-elements-by-height="2000"
+          filename="QR"
+          :pdf-quality="2"
+          :manual-pagination="false"
+          pdf-format="a4"
+          pdf-orientation="landscape"
+          pdf-content-width="800px"
+          @progress="onProgress($event)"
+          @hasStartedGeneration="hasStartedGeneration()"
+          @hasGenerated="hasGenerated($event)"
+          ref="html2Pdf"
+        >
+          <section slot="pdf-content">
+            <!-- PDF Content Here -->
+            <v-img width="100" src="../assets/akb_logo_full.png"></v-img>
+            <qriously style="margin : 20px" :value="tempConcatQR" :size="200" />
+          </section>
+        </vue-html2pdf>
+      </div>
+    </template>
     <v-snackbar v-model="snackbar" :color="color" timeout="2000" bottom>
       {{ error_message }}
     </v-snackbar>
   </v-main>
 </template>
 <script>
+import VueHtml2pdf from "vue-html2pdf";
 export default {
+  components: {
+    VueHtml2pdf,
+  },
   name: "List",
   data() {
     return {
@@ -938,6 +972,9 @@ export default {
     },
     saveDateTidakLangsung(date) {
       this.$refs.menuTidakLangsung.save(date);
+    },
+    generateReport() {
+      this.$refs.html2Pdf.generatePdf();
     },
   },
   computed: {

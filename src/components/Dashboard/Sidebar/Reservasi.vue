@@ -884,6 +884,7 @@ export default {
     qrHandler(item) {
       let newData = {
         id_reservasi: item.id,
+        nomor_meja: item.nomor_meja,
       };
       var url = this.$api + "/transaksi";
       this.load = true;
@@ -910,6 +911,7 @@ export default {
             this.tempIsiQR.tanggal +
             ";" +
             this.tempIsiQR.waktu;
+          this.readData();
           this.load = false;
           this.qrDialog = true;
         })

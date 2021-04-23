@@ -186,6 +186,13 @@ export default {
           value: "metode_pembayaran",
         },
         { text: "Total Harga", class: "pink lighten-4", value: "total_harga" },
+        { text: "Service 5%", class: "pink lighten-4", value: "pajakservice" },
+        { text: "Pajak 10%", class: "pink lighten-4", value: "pajaktax" },
+        {
+          text: "Total Setelah Pajak",
+          class: "pink lighten-4",
+          value: "total",
+        },
         {
           text: "Kode Verifikasi",
           class: "pink lighten-4",

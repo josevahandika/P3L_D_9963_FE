@@ -28,6 +28,7 @@
       >
         <template v-slot:[`item.actions`]="{ item }">
           <v-btn
+            v-if="item.status == 'Completed'"
             small
             color="pink lighten-4 black--text"
             @click="finishHandler(item)"
@@ -119,6 +120,135 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="dialogFinish" persistent max-width="600px">
+      <v-card>
+        <v-card-title>
+          <span>Detail Transaksi</span>
+        </v-card-title>
+        <v-data-table
+          :headers="headersDetail"
+          :items="detailTransaksi"
+          no-data-text="Loading"
+          no-results-text="Data tidak ditemukan"
+        >
+        </v-data-table>
+        <v-card-text>
+          <v-container>
+            <v-form ref="form" lazy-validation v-model="valid">
+              <h3>Total Harga: {{ this.tempSebelumPajak }}</h3>
+              <h3>Pajak 5 % : {{ this.tempPajak5 }}</h3>
+              <h3>Pajak 10 % : {{ this.tempPajak10 }}</h3>
+              <h3>Harga Setelah Pajak : {{ this.tempSemuanya }}</h3>
+              <v-select
+                v-model="form.metode_pembayaran"
+                :items="metode_pembayaran"
+                label="Metode Pembayaran"
+                :rules="fieldEmpty"
+              ></v-select>
+              <div v-if="form.metode_pembayaran == 'Tunai'">
+                <v-text-field
+                  v-model="uang_bayar"
+                  type="number"
+                  :error="tempError"
+                  :error-messages="tempErrorMessage"
+                  label="Masukkan Uang Pembayaran"
+                  :rules="fieldEmpty"
+                ></v-text-field>
+                <v-text-field
+                  v-if="form.metode_pembayaran == 'Tunai'"
+                  v-model="kembalian"
+                  label="Kembalian"
+                  :rules="fieldEmpty"
+                  disabled
+                ></v-text-field>
+              </div>
+              <div v-else-if="form.metode_pembayaran == 'Non Tunai'">
+                <v-select
+                  v-if="form.metode_pembayaran == 'Non Tunai'"
+                  v-model="form.jenis_kartu"
+                  :items="jenis_kartu"
+                  :rules="fieldEmpty"
+                  label="Jenis Kartu"
+                ></v-select>
+                <v-text-field
+                  v-if="form.jenis_kartu == 'Kredit'"
+                  v-model="form.nama_pemilik"
+                  :rules="fieldEmpty"
+                  label="Nama Pemilik"
+                ></v-text-field>
+                <v-menu
+                  v-if="form.metode_pembayaran == 'Non Tunai'"
+                  ref="menu"
+                  v-model="menu"
+                  :close-on-content-click="false"
+                  transition="scale-transition"
+                  offset-y
+                  min-width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-text-field
+                      v-model="form.tanggal_kadaluarsa"
+                      label="Tanggal Kadaluarsa"
+                      :rules="fieldEmpty"
+                      append-icon="mdi-calendar"
+                      readonly
+                      v-bind="attrs"
+                      v-on="on"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    ref="picker"
+                    v-model="form.tanggal_kadaluarsa"
+                    max="2030-01-01"
+                    :min="maxDate"
+                    @change="saveDate"
+                  ></v-date-picker>
+                </v-menu>
+                <v-text-field
+                  v-if="form.metode_pembayaran == 'Non Tunai'"
+                  type="number"
+                  class="inputNumber"
+                  v-model="form.nomor_kartu"
+                  :rules="fieldNumber"
+                  label="Nomor Kartu"
+                ></v-text-field>
+                <v-text-field
+                  v-if="form.metode_pembayaran == 'Non Tunai'"
+                  v-model="form.kode_verifikasi"
+                  :rules="fieldEmpty"
+                  label="Kode Verifikasi"
+                ></v-text-field>
+                <v-text-field
+                  v-if="form.metode_pembayaran == 'Non Tunai'"
+                  v-model="uang_bayar"
+                  type="number"
+                  :error="tempError"
+                  :error-messages="tempErrorMessage"
+                  label="Masukkan Uang Pembayaran"
+                  :rules="fieldEmpty"
+                ></v-text-field>
+                <v-text-field
+                  v-if="form.metode_pembayaran == 'Non Tunai'"
+                  v-model="kembalian"
+                  label="Kembalian"
+                  :rules="fieldEmpty"
+                  disabled
+                ></v-text-field>
+              </div>
+            </v-form>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="blue darken-1" text @click="closeFinish">
+            Close
+          </v-btn>
+          <v-btn color="blue darken-1" text @click="bayar">
+            Bayar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-snackbar v-model="snackbar" :color="color" timeout="2000" bottom>
       {{ error_message }}
     </v-snackbar>
@@ -129,15 +259,28 @@ export default {
   name: "List",
   data() {
     return {
+      maxDate: new Date().toISOString().substr(0, 10),
+      metode_pembayaran: ["Tunai", "Non Tunai"],
+      jenis_kartu: ["Debit", "Kredit"],
       inputType: "Tambah",
       load: false,
       indexhistory: false,
       snackbar: false,
       error_message: "",
       color: "",
+      tempSebelumPajak: "",
+      tempPajak5: "",
+      tempPajak10: "",
+      tempSemuanya: "",
+      uang_bayar: "",
+      kembalian: "",
+      tempNoMeja: "",
+      tempError: false,
+      tempErrorMessage: "",
       search: null,
       dialog: false,
       dialogHistory: false,
+      dialogFinish: false,
       headers: [
         {
           text: "Nomor Transaksi",
@@ -226,6 +369,10 @@ export default {
         email: null,
         telepon: null,
       },
+      fieldNumber: [
+        (v) => !!v || "Field tidak boleh kosong",
+        (v) => (v && v.length == 16) || "Nomor Kartu harus 16 digit!",
+      ],
       deleteId: "",
       editId: "",
       fieldEmpty: [(v) => !!v || "Field tidak boleh kosong"],
@@ -373,8 +520,32 @@ export default {
           this.dialogHistory = true;
         });
     },
+    finishHandler(item) {
+      var tempTotal = 0;
+      var url = this.$api + "/detailtransaksifinish/" + item.id;
+      console.log(item.id);
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        })
+        .then((response) => {
+          this.detailTransaksi = response.data.data;
+          tempTotal = response.data.total;
+          this.dialogFinish = true;
+          this.tempSebelumPajak = tempTotal;
+          this.tempPajak5 = (tempTotal * 5) / 100;
+          this.tempPajak10 = (tempTotal * 10) / 100;
+          this.tempSemuanya = (tempTotal * 115) / 100;
+        });
+    },
     close() {
       this.dialogHistory = false;
+    },
+    closeFinish() {
+      this.$refs.form.reset();
+      this.dialogFinish = false;
     },
     cancel() {
       this.$refs.form.reset();
@@ -407,5 +578,36 @@ export default {
   mounted() {
     this.readData();
   },
+  watch: {
+    customerYangSudahAda(val) {
+      if (val == false) {
+        this.form.nama_customer = "";
+        this.form.telepon = "";
+        this.form.email = "";
+        this.tempCustomer = false;
+      } else {
+        this.tempCustomer = true;
+      }
+    },
+    uang_bayar() {
+      if (this.tempSemuanya > this.uang_bayar) {
+        this.tempError = true;
+        this.tempErrorMessage = "Uang Kurang";
+        this.kembalian = "";
+      } else {
+        this.tempError = false;
+        this.tempErrorMessage = "";
+        this.kembalian = this.uang_bayar - this.tempSemuanya;
+      }
+    },
+  },
 };
 </script>
+<style>
+.inputNumber input::-webkit-outer-spin-button,
+.inputNumber input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  display: none;
+}
+</style>

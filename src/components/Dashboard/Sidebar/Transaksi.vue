@@ -375,6 +375,7 @@ export default {
       ],
       deleteId: "",
       editId: "",
+      bayarId: "",
       fieldEmpty: [(v) => !!v || "Field tidak boleh kosong"],
       emailRules: [(v) => /.+@.+\..+/.test(v) || "E-mail must be valid"],
       valid: true,
@@ -522,6 +523,8 @@ export default {
     },
     finishHandler(item) {
       var tempTotal = 0;
+      this.bayarId = item.id;
+      this.tempNoMeja = item.nomor_meja;
       var url = this.$api + "/detailtransaksifinish/" + item.id;
       console.log(item.id);
       this.$http
@@ -552,6 +555,77 @@ export default {
       this.readData();
       this.dialog = false;
       this.inputType = "Tambah";
+    },
+    bayar() {
+      if (!this.$refs.form.validate() || this.tempError == true) {
+        this.snackbar = true;
+        this.error_message = "Form Belum Lengkap!";
+        this.color = "red";
+      } else {
+        let newData = {
+          nomor_kartu: this.form.nomor_kartu,
+          jenis_kartu: this.form.jenis_kartu,
+          tanggal_kadaluarsa: this.form.tanggal_kadaluarsa,
+          id_karyawan: localStorage.getItem("id"),
+          metode_pembayaran: this.form.metode_pembayaran,
+          kode_verifikasi: this.form.kode_verifikasi,
+          nama_pemilik: this.form.nama_pemilik,
+          nomor_meja: this.tempNoMeja,
+        };
+
+        var url = this.$api + "/transaksiBayar/" + this.bayarId;
+        this.load = true;
+        this.$http
+          .put(url, newData, {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          })
+          .then((response) => {
+            console.log(response.data.data);
+            this.error_message = "Transaksi sudah selesai";
+            this.color = "green";
+            this.snackbar = true;
+            this.load = false;
+            this.closeFinish();
+            this.readData(); //mengambil data
+            this.readDataHistory(); //mengambil data
+            this.generatePDF();
+            this.resetForm();
+            this.dialogFinish = false;
+            //this.inputType = "Tambah";
+          })
+          .catch((error) => {
+            this.error_message = error.response.data.message;
+            this.color = "red";
+            this.snackbar = true;
+            this.load = false;
+          });
+      }
+    },
+    generatePDF() {
+      console.log(this.bayarId);
+      var url = this.$api + "/generatePDF/" + this.bayarId;
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "remaining_fee.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          this.readData(); //mengambil data
+          this.readDataHistory(); //mengambil data
+          this.dialogFinish = false;
+          console.log(response.data.message);
+          console.log("asd");
+        });
     },
     resetForm() {
       this.form = {

@@ -170,7 +170,7 @@
           <v-btn color="blue darken-1" text @click="cancelStok">
             Close
           </v-btn>
-          <v-btn color="blue darken-1" text @click="generatePDFStok">
+          <v-btn color="blue darken-1" text @click="cekValidasiFormStok">
             Cetak
           </v-btn>
         </v-card-actions>
@@ -270,7 +270,7 @@
               ></v-select>
               <v-select
                 v-if="formPendapatan.periode == 'Bulanan'"
-                v-model="formPendapatan.tahunPendapatan"
+                v-model="formPendapatan.tahun_awal"
                 :items="tahun"
                 :rules="fieldEmpty"
                 label="Tahun"
@@ -297,9 +297,9 @@
           <v-btn color="blue darken-1" text @click="cancelPendapatan">
             Close
           </v-btn>
-          <!-- <v-btn color="blue darken-1" text @click="setForm">
+          <v-btn color="blue darken-1" text @click="generatePDFPendapatan">
             Cetak
-          </v-btn> -->
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -320,7 +320,7 @@
               ></v-select>
               <v-select
                 v-if="formPengeluaran.periode == 'Bulanan'"
-                v-model="formPengeluaran.tahunPengeluaran"
+                v-model="formPengeluaran.tahun_awal"
                 :items="tahun"
                 :rules="fieldEmpty"
                 label="Tahun"
@@ -347,9 +347,9 @@
           <v-btn color="blue darken-1" text @click="cancelPengeluaran">
             Close
           </v-btn>
-          <!-- <v-btn color="blue darken-1" text @click="setForm">
+          <v-btn color="blue darken-1" text @click="generatePDFPengeluaran">
             Cetak
-          </v-btn> -->
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -370,6 +370,8 @@ export default {
       snackbar: false,
       error_message: "",
       color: "",
+      menu: false,
+      menu2: false,
       tempBulan: "",
       periodeStok: ["Tanggal Tertentu", "Bulanan"],
       periode: ["Bulanan", "Tahunan"],
@@ -381,6 +383,8 @@ export default {
       form: {
         periodeStok: null,
         tanggal: null,
+        tanggal_awal: null,
+        tanggal_akhir: null,
         id_bahan: null,
       },
       formItemMenu: {
@@ -390,13 +394,11 @@ export default {
       },
       formPendapatan: {
         periode: null,
-        tahunPendapatan: null,
         tahun_awal: null,
         tahun_akhir: null,
       },
       formPengeluaran: {
         periode: null,
-        tahunPengeluaram: null,
         tahun_awal: null,
         tahun_akhir: null,
       },
@@ -446,6 +448,27 @@ export default {
           console.log(this.list);
         });
     },
+    cekValidasiFormStok() {
+      if (this.$refs.form.validate()) {
+        if (this.form.periodeStok == "Bulanan") {
+          if (this.form.id_bahan == "All") {
+            this.generatePDFStok();
+          } else {
+            this.generatePDFStokCustom();
+          }
+        } else {
+          if (this.form.id_bahan == "All") {
+            this.generatePDFStokPeriodeAll();
+          } else {
+            this.generatePDFStokPeriodeItem();
+          }
+        }
+      } else {
+        this.snackbar = true;
+        this.error_message = "Isi form dengan benar";
+        this.color = "red";
+      }
+    },
     generatePDFStok() {
       var url =
         this.$api +
@@ -473,6 +496,169 @@ export default {
           // this.readDataHistory(); //mengambil data
           this.dialogLaporanStok = false;
           this.$refs.form.reset();
+          console.log(response.data.message);
+          console.log("asd");
+        });
+    },
+    generatePDFStokCustom() {
+      var url =
+        this.$api +
+        "/laporanStokBulananCustom/" +
+        this.form.tanggal +
+        "/" +
+        localStorage.getItem("id") +
+        "/" +
+        this.form.id_bahan;
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "struk.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          // this.readData(); //mengambil data
+          // this.readDataHistory(); //mengambil data
+          this.dialogLaporanStok = false;
+          this.$refs.form.reset();
+          console.log(response.data.message);
+          console.log("asd");
+        });
+    },
+    generatePDFStokPeriodeAll() {
+      var url =
+        this.$api +
+        "/laporanStokCustomAll/" +
+        this.form.tanggal_awal +
+        "/" +
+        this.form.tanggal_akhir +
+        "/" +
+        localStorage.getItem("id");
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "struk.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          // this.readData(); //mengambil data
+          // this.readDataHistory(); //mengambil data
+          this.dialogLaporanStok = false;
+          this.$refs.form.reset();
+          console.log(response.data.message);
+          console.log("asd");
+        });
+    },
+    generatePDFStokPeriodeItem() {
+      var url =
+        this.$api +
+        "/laporanStokCustomItem/" +
+        this.form.tanggal_awal +
+        "/" +
+        this.form.tanggal_akhir +
+        "/" +
+        localStorage.getItem("id") +
+        "/" +
+        this.form.id_bahan;
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "struk.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          // this.readData(); //mengambil data
+          // this.readDataHistory(); //mengambil data
+          this.dialogLaporanStok = false;
+          this.$refs.form.reset();
+          console.log(response.data.message);
+          console.log("asd");
+        });
+    },
+    generatePDFPendapatan() {
+      if (this.formPendapatan.periode == "Bulanan") {
+        this.formPendapatan.tahun_akhir = "Kosong";
+      }
+      var url =
+        this.$api +
+        "/laporanPendapatan/" +
+        localStorage.getItem("id") +
+        "/" +
+        this.formPendapatan.tahun_awal +
+        "/" +
+        this.formPendapatan.tahun_akhir;
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "struk.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          // this.readData(); //mengambil data
+          // this.readDataHistory(); //mengambil data
+          this.dialogLaporanPendapatan = false;
+          this.$refs.formPendapatan.reset();
+          console.log(response.data.message);
+          console.log("asd");
+        });
+    },
+    generatePDFPengeluaran() {
+      if (this.formPengeluaran.periode == "Bulanan") {
+        this.formPengeluaran.tahun_akhir = "Kosong";
+      }
+      var url =
+        this.$api +
+        "/laporanPengeluaran/" +
+        localStorage.getItem("id") +
+        "/" +
+        this.formPengeluaran.tahun_awal +
+        "/" +
+        this.formPengeluaran.tahun_akhir;
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "struk.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          // this.readData(); //mengambil data
+          // this.readDataHistory(); //mengambil data
+          this.dialogLaporanPengeluaran = false;
+          this.$refs.formPengeluaran.reset();
           console.log(response.data.message);
           console.log("asd");
         });

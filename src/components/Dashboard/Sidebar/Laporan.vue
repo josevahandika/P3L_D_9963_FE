@@ -232,13 +232,6 @@
                 label="Tahun"
               >
               </v-select>
-              <v-select
-                v-model="formItemMenu.id_bahan"
-                label="Bahan"
-                :items="list"
-                :rules="fieldEmpty"
-                required
-              ></v-select>
             </v-form>
           </v-container>
         </v-card-text>
@@ -247,9 +240,9 @@
           <v-btn color="blue darken-1" text @click="cancelPenjualanItemMenu">
             Close
           </v-btn>
-          <!-- <v-btn color="blue darken-1" text @click="setForm">
+          <v-btn color="blue darken-1" text @click="cekValidasiFormItemMenu">
             Cetak
-          </v-btn> -->
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -390,7 +383,7 @@ export default {
       formItemMenu: {
         periode: null,
         tanggal: null,
-        id_bahan: null,
+        tahunItemMenu: null,
       },
       formPendapatan: {
         periode: null,
@@ -462,6 +455,19 @@ export default {
           } else {
             this.generatePDFStokPeriodeItem();
           }
+        }
+      } else {
+        this.snackbar = true;
+        this.error_message = "Isi form dengan benar";
+        this.color = "red";
+      }
+    },
+    cekValidasiFormItemMenu() {
+      if (this.$refs.formItemMenu.validate()) {
+        if (this.formItemMenu.periode == "Bulanan") {
+          this.generatePDFPenjualanItemBulanan();
+        } else {
+          this.generatePDFPenjualanItemTahunan();
         }
       } else {
         this.snackbar = true;
@@ -573,6 +579,64 @@ export default {
         localStorage.getItem("id") +
         "/" +
         this.form.id_bahan;
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "struk.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          // this.readData(); //mengambil data
+          // this.readDataHistory(); //mengambil data
+          this.dialogLaporanStok = false;
+          this.$refs.form.reset();
+          console.log(response.data.message);
+          console.log("asd");
+        });
+    },
+    generatePDFPenjualanItemBulanan() {
+      var url =
+        this.$api +
+        "/laporanPenjualanItemMenuBulanan/" +
+        this.formItemMenu.tanggal +
+        "/" +
+        localStorage.getItem("id");
+      this.$http
+        .get(url, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+          responseType: "blob",
+        })
+        .then((response) => {
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", "struk.pdf"); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+          // this.readData(); //mengambil data
+          // this.readDataHistory(); //mengambil data
+          this.dialogLaporanStok = false;
+          this.$refs.form.reset();
+          console.log(response.data.message);
+          console.log("asd");
+        });
+    },
+    generatePDFPenjualanItemTahunan() {
+      var url =
+        this.$api +
+        "/laporanPenjualanItemMenuTahunan/" +
+        this.formItemMenu.tahunItemMenu +
+        "/" +
+        localStorage.getItem("id");
       this.$http
         .get(url, {
           headers: {
